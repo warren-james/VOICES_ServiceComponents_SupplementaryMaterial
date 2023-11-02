@@ -18,7 +18,7 @@ Add in some text to talk about what we're doing in the paper and what this docum
 
 These are the packages that were used in the analysis of the data. Please note, the version numbers might be different, but the methods are still the same. 
 
-```{r load libraries}
+```{r load libraries, warning = F}
 library(tidyverse)
 library(tidybayes)
 library(brms)
