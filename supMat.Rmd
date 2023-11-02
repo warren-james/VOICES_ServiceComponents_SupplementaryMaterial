@@ -1,6 +1,15 @@
 ---
 title: "Paper supplementary material"
-output: rmarkdown::github_document
+output: 
+  bookdown::html_document2:
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    number_sections: no
+    theme: flatly
+    highlight: kate 
+    fig.caption: yes 
+    tables: true 
 ---
 
 ```{r setup, include=FALSE}
