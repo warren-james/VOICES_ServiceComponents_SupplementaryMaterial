@@ -1,0 +1,10 @@
+# check we have the same dataset in the safehaven 
+df_SurveyResps %>% 
+  select(-ID) %>% 
+  gather(1:ncol(.), 
+         key = "Param", 
+         value = "resp") %>% 
+  drop_na() %>%
+  group_by(Param) %>% 
+  summarise(n = sum(resp))
+

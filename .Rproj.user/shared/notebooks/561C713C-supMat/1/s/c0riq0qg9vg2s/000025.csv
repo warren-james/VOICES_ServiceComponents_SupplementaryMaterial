@@ -1,0 +1,49 @@
+"0","# show how many had both, neither, x not y, y not x
+df_SurveyResps %>% 
+  select(ID, uniqueQs) %>% 
+  gather(2:ncol(.), 
+         key = ""QuestionX"", 
+         value = ""ResponseX"") %>% 
+  left_join(df_SurveyResps %>% 
+              select(ID, uniqueQs)) %>% 
+  gather(4:ncol(.), 
+         key = ""QuestionY"", 
+         value = ""ResponseY"") %>% 
+  drop_na() %>% 
+  group_by(QuestionX, QuestionY, ResponseX, ResponseY) %>% 
+  summarise(n = n()) %>% 
+  group_by(QuestionX, QuestionY) %>% 
+  mutate(total = sum(n)) %>% 
+  ungroup() %>% 
+  complete(ResponseX, nesting(QuestionX, QuestionY, ResponseY), fill = list(n = 0)) %>% 
+  group_by(QuestionX, QuestionY) %>% 
+  mutate(total = sum(n)) %>% 
+  ungroup() %>% 
+  mutate(prop = n/total, 
+         label = paste0(""X:"", ResponseX, "", Y:"", ResponseY, "" = "", round(prop * 100, 1), ""%\n"")) %>% 
+  group_by(QuestionX, QuestionY) %>%
+  mutate(match = sum(as.numeric(ResponseX == ResponseY) * n)/total) %>% 
+  group_by(QuestionX, QuestionY, match) %>% 
+  summarise(label = paste(unique(label), collapse = """")) %>% 
+  ggplot(aes(QuestionX, QuestionY, fill = match)) + 
+  geom_tile(colour = ""white"", 
+            lwd = 1.5 ) + 
+  geom_text(aes(label = label, 
+                colour = abs(match - .5) > .25)) + 
+  scale_y_discrete("""", limits = rev) +
+  scale_x_discrete("""") +
+  scale_colour_manual(values = c(""black"", ""white"")) +
+  # scale_fill_gradient2(space = ""Lab"") +
+  scale_fill_gradient2(low = ""#b71c1c"", 
+                       mid = ""white"", 
+                       high =  ""#1a237e"", 
+                       midpoint = .5, 
+                       space = ""Lab"") +
+  coord_cartesian(expand = F) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        legend.position = ""none"", 
+        axis.text = element_text(size = min(textSize) - 2))
+"
+"2","Joining with `by = join_by(ID)`"
+"2","`summarise()` has grouped output by 'QuestionX', 'QuestionY', 'ResponseX'. You can override using the `.groups` argument."
+"2","`summarise()` has grouped output by 'QuestionX', 'QuestionY'. You can override using the `.groups` argument."
