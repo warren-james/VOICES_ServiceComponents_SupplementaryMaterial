@@ -1,5 +1,5 @@
 "0","# Sort out the theme"
-"0","textSize <- 15:17"
+"0","textSize <- 17:20"
 "0","theme_set(theme_bw())"
 "0","theme_update("
 "0","  title = element_text(size = textSize[3]),"

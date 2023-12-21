@@ -1,15 +1,6 @@
 ---
 title: "Paper supplementary material"
-output: 
-  bookdown::html_document2:
-    toc: yes
-    toc_depth: 4
-    toc_float: yes
-    number_sections: no
-    theme: flatly
-    highlight: kate 
-    fig.caption: yes 
-    tables: true 
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
@@ -74,7 +65,7 @@ theme_update(
 
 # Data Linkage 
 
-Data linkage was carried out by the DaSH team at the University of Aberdeen. Several datasets were linked in order to provide the data necessary to complete the data analysis in this project. 
+Data linkage was carried out by eDRIS. Several datasets were linked in order to provide the data necessary to complete the data analysis in this project. 
 
 ```{r Show data linkage diagram, echo = F}
 knitr::include_graphics("img/LinkageDiagram.jpg")
@@ -83,6 +74,8 @@ knitr::include_graphics("img/LinkageDiagram.jpg")
 # ICD-10 Codes 
 
 Here is the list of ICD-10 codes used to detect Serious Infections, Cancer, and Cardiovascular events. The codes can be filtered in the table by typing out the key outcome of interest in the space provided. 
+
+<!-- TODO: sort this table to have a word appropriate version of the table -->
 
 ```{r sort ICD table, echo = F}
 Codes_SI <- c("A01", "A011", "A02", "A020", "A021", "A022", "A028", "A029", "A03", "A033", "A039", 
@@ -196,7 +189,7 @@ reactable(thisTable,
 
 To demonstrate the analysis carried out in this paper, the results will be use to produce a synthetic dataset. The same model fitting procedures will then be shown alongside additional explanation and extra figures. For the demonstration. I'm only going to look at the Serious Infection data so as to avoid making this document too long. 
 
-## Univariate 
+## Univariable
 
 This analysis was concerned with looking at the effect of each service component by including each component in separate models adjusting for various demographic features and their 2-way interactions.
 
@@ -227,7 +220,7 @@ uniqueLabel <- unique(df_uni_SI$humanLabel)
 ```
 ### Figures for Coefficients {.tabset}
 
-For each Service component, a Poisson regression was run while accounting for several demographic features. The results of these models can be seen in the panel below. 
+For each Service component, a Poisson regression was run while accounting for several demographic features. The results of these models can be seen in the panel below.
 
 ```{r function to show the different effects, echo = F, include = F}
 showCoefs_tibble <- function(thisData, thisQ, thisLabel, thisColour = "#8a2587"){
@@ -269,13 +262,17 @@ for(i in 1:length(uniqueQs)){
 
 Will probably need to do this twice for each dataset.
 
-## Multivariate Horseshoe
+<!-- ## Multivariate Horseshoe -->
+## Multivariable
 
-NB: I haven't included the local specialty/organ specific as not everyone provided an answer to that question. So, might want to think about whether or not to include this information?
+This analysis included every service component as a term in the model. In doing so, the effect of each service component could be estimated independently of the effect of the other service components. As can be seen below, there are several service components that appear to be highly correlated (i.e., some components are either both present or both absent within a particular service). In addition to entering each service component, a random intercept for a patient's health board of treatment was included to adjust for differences in the base rates of each key clinical outcome and emergency hospital visits. 
 
-This section details the process of fitting the model with all service components included with their 2 way interactions only with the demographic information. This approach was opted for in order to estimate which features still appeared to have an impact on outcomes after accounting for the presence of the other service components. The horseshoe prior allows for coefficients to be close to 0 if there is little evidence the effect has much of an impact while allowing larger effects to move away from 0. 
+TODO: create synthetic data when we have the analysis out of the safehaven. 
+<!-- NB: I haven't included the local specialty/organ specific as not everyone provided an answer to that question. So, might want to think about whether or not to include this information? -->
 
-Should show a figure to show the specialties and how the responded to each question to show that we can look at these variables in this way.
+<!-- This section details the process of fitting the model with all service components included with their 2 way interactions only with the demographic information. This approach was opted for in order to estimate which features still appeared to have an impact on outcomes after accounting for the presence of the other service components. The horseshoe prior allows for coefficients to be close to 0 if there is little evidence the effect has much of an impact while allowing larger effects to move away from 0.  -->
+
+<!-- Should show a figure to show the specialties and how the responded to each question to show that we can look at these variables in this way. -->
 
 ```{r show survey responses, echo = F, warning = F, message = F}
 df_SurveyResps <- read_csv("data/surveyResponses.csv")
@@ -286,31 +283,35 @@ df_SurveyResps <- df_SurveyResps %>%
 theseQs <- uniqueQs[uniqueQs %in% colnames(df_SurveyResps)]
 df_SurveyResps %>% 
   select(ID, uniqueQs) %>%
+  mutate(LedOrAdvice = NurseLedClinic + NurseAdviceLine >= 1) %>% 
+  select(-c(OrganSpecialtyMDT, NurseLedClinic, NurseAdviceLine)) %>% 
   gather(2:ncol(.), 
          key = "Question", 
          value = "Response") %>%
   mutate(
     Response = case_when(Response == 1 ~ "Yes",
-                              Response == 0 ~ "No", 
-                              TRUE ~ "No answer"),
-         Response = factor(Response, levels = c("Yes", "No", "No answer")),
-         humanLabel = case_when(
-           Question == "LocalAAVpath" ~ "Local AAV pathway",
-           Question == "LocalGCApath" ~ "Local GCA pathway",
-           Question == "CohortedClinic" ~ "Cohorted clinic",
-           Question == "DiscussMDT" ~ "Any MDT meeting",
-           Question == "VascMDT" ~ "Vasculitis MDT",
-           Question == "OrganSpecialtyMDT" ~ "Local specialty/organ specific MDT only", # Figure out the label for this one
-           Question == "OwnDayCaseUnit" ~ "Own day case unit",
-           Question == "SpecVascNurse" ~ "Specialist vasculitis nurse",
-           Question == "NurseAdviceLine" ~ "Nurse Advice Line", 
-           Question == "NurseLedClinic" ~ "Nurse led clinic",
-           Question == "LocalDatabase" ~ "Local database vasculitis patients",
-           Question == "WaitTimeNewWithinWeek" ~ "Wait time for new patients (<1 week)",
-           Question == "FrequencyFollowUpWithinWeek" ~ "Wait time return patients (<1 week)",
-           Question == "JointParaClinic" ~ "Joint/Parallel clinic",
-           Question == "UrgentIVWithinWeek" ~ "Urgent IV access day case <1 week"
-         )) %>% 
+                         Response == 0 ~ "No", 
+                         TRUE ~ "No answer"),
+    Response = factor(Response, levels = c("Yes", "No", "No answer")),
+    
+    humanLabel = case_when(
+      Question == "LocalAAVpath" ~ "Local AAV pathway",
+      Question == "LocalGCApath" ~ "Local GCA pathway",
+      Question == "CohortedClinic" ~ "Cohorted clinic",
+      Question == "DiscussMDT" ~ "Any MDT meeting",
+      Question == "VascMDT" ~ "Vasculitis MDT",
+      Question == "OrganSpecialtyMDT" ~ "Local specialty/organ specific MDT only", # Figure out the label for this one
+      Question == "OwnDayCaseUnit" ~ "Own day case unit",
+      Question == "SpecVascNurse" ~ "Specialist vasculitis nurse",
+      Question == "NurseAdviceLine" ~ "Nurse Advice Line", 
+      Question == "NurseLedClinic" ~ "Nurse led clinic",
+      Question == "LocalDatabase" ~ "Local database vasculitis patients",
+      Question == "WaitTimeNewWithinWeek" ~ "Wait time for new patients (<1 week)",
+      Question == "FrequencyFollowUpWithinWeek" ~ "Wait time return patients (<1 week)",
+      Question == "JointParaClinic" ~ "Joint/Parallel clinic",
+      Question == "UrgentIVWithinWeek" ~ "Urgent IV access day case <1 week",
+      Question == "LedOrAdvice" ~ "Nurse advice line and/or led cinic"
+    )) %>% 
   ggplot(aes(ID, humanLabel, fill = Response)) + 
   geom_tile(lwd = 1.5, 
             colour = "white", 
@@ -319,16 +320,20 @@ df_SurveyResps %>%
   scale_y_discrete("", labels = function(x) str_wrap(x, 20)) +
   scale_fill_manual(values = c("#1a237e", "#b71c1c", "#cfd8dc")) + 
   coord_cartesian(expand = F) + 
+  theme_bw() + 
   theme(axis.ticks = element_blank(), 
-        legend.position = "bottom")
+        legend.position = "bottom", 
+        axis.text = element_text(size = min(textSize)),
+        legend.text = element_text(size = min(textSize)),
+        legend.title = element_text(size = min(textSize)))
 ggsave("AllResponses.png", 
        height = 10, 
-       width = 15)
+       width = 17.5)
 ```
 
-From the below plot, we can also see that we can see that there are some variables that should only be entered once as they're very strongly related. For example, Vasculitis MDT and Specialist vasculitis nurse are almost entirely the same. The same goes for Nurse led clinic and Nurse Advice line
+<!-- From the below plot, we can also see that we can see that there are some variables that should only be entered once as they're very strongly related. For example, Vasculitis MDT and Specialist vasculitis nurse are almost entirely the same. The same goes for Nurse led clinic and Nurse Advice line -->
 
-```{r another way to look at things, echo = F, message = F, warning = F}
+```{r another way to look at things, echo = F, message = F, warning = F, include = F}
 # try something where we show how frequently the responses are the same across all pairs?
 # Shouldn't be too hard to sort this out?
 df_SurveyResps %>% 
@@ -404,9 +409,9 @@ df_SurveyResps %>%
         axis.text = element_text(size = min(textSize) - 2))
 ```
 
-Another way to look at similarity is the "jaccard" score. Effectively, this treats presence and absence asymmetrically so two absences aren't used in this matching score. Generally this is used when there are a large number of items and 0's a more likely to appear which inflates the similarity in a way that doesn't matter in certain circumstances. Not sure whether the problem we're looking at here needs this solution, but it's worth a look I guess. 
+<!-- Another way to look at similarity is the "jaccard" score. Effectively, this treats presence and absence asymmetrically so two absences aren't used in this matching score. Generally this is used when there are a large number of items and 0's a more likely to appear which inflates the similarity in a way that doesn't matter in certain circumstances. Not sure whether the problem we're looking at here needs this solution, but it's worth a look I guess.  -->
 
-```{r test clusteval, echo = F, message = F}
+```{r test clusteval, echo = F, message = F, include = F}
 jaccard_sim <- function(listA, listB){
   bothPos <- sum(listA + listB == 2)
   bothDif <- sum(listA != listB)
@@ -506,9 +511,9 @@ df_SurveyResps %>%
 # TODO add in simple match sumMatch = sum(match)
 ```
 
-### Try different grouping rules for nurses part {.tabset}
+<!-- ### Try different grouping rules for nurses part {.tabset} -->
 
-```{r sort out data for nurse grouping, echo = F, message = F}
+```{r sort out data for nurse grouping, echo = F, message = F, include = F}
 df_NurseCheck <- df_SurveyResps %>% 
   select(ID, uniqueQs) %>% 
   mutate(Nurse3 = as.numeric(SpecVascNurse == 1 & NurseLedClinic == 1 & NurseAdviceLine), 
@@ -535,9 +540,9 @@ NurseCheck <- df_NurseCheck %>%
 ```
 
 
-#### Has all Nurse values 
+<!-- #### Has all Nurse values  -->
 
-```{r Checking all nurse values, echo = F, message = F}
+```{r Checking all nurse values, echo = F, message = F, include = F}
 NurseCheck %>% 
   filter(QuestionX != "Nurse2", 
          QuestionX != "Nurse1",
@@ -563,9 +568,9 @@ NurseCheck %>%
         axis.text = element_text(size = min(textSize) - 2))
 ```
 
-#### Only missing one 
+<!-- #### Only missing one  -->
 
-```{r missing one value, echo = F, message = F}
+```{r missing one value, echo = F, message = F, include = F}
 NurseCheck %>% 
   filter(QuestionX != "Nurse1", 
          QuestionX != "Nurse3",
@@ -592,9 +597,9 @@ NurseCheck %>%
 ```
 
 
-#### Has at least one
+<!-- #### Has at least one -->
 
-```{r Has at least one, echo = F, message = F}
+```{r Has at least one, echo = F, message = F, include = F}
 NurseCheck %>% 
   filter(QuestionX != "Nurse2", 
          QuestionX != "Nurse3",
@@ -645,9 +650,9 @@ As above, the Emergency care data could include multiple rows that all refer to 
 - 30: Emergency Admission - no additional detail
 - 31: Patient Injury - Self Inflicted (Injury or Poisoning)
 - 32: Patient Injury - Road Traffic Accident
-- 33: Patient Injury - Home Incident (incl. assault of accidental poisoning)
-- 34: Patient Injury - Incident at Work (incl. assault of accidental poisoning) 
-- 35: Patient Injury - Other Injury (incl. assaly or accidental poisoning other than in the home or at work) 
+- 33: Patient Injury - Home Incident (incl. assault or accidental poisoning)
+- 34: Patient Injury - Incident at Work (incl. assault or accidental poisoning) 
+- 35: Patient Injury - Other Injury (incl. assault or accidental poisoning other than in the home or at work) 
 - 36: Patient Non-Injury (e.g. Stroke, MI, ruptured appendix)
 - 38: Other Emergency Admission (including emergency transfers)
 - 39: Emergency Admission - type not known

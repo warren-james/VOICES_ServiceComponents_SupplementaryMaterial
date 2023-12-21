@@ -1,0 +1,22 @@
+library(tidyverse)
+# install.packages("quartets")
+library(quartets)
+## Figure 3
+ggplot(causal_quartet, aes(x = exposure, y = outcome)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(
+    method = "lm",
+    formula = "y ~ x",
+    linewidth = 1.1,
+    color = "steelblue",
+    se = FALSE
+  ) +
+  facet_wrap(~dataset)
+
+causal_quartet |>
+  nest_by(dataset) |>
+  mutate(ate_x = coef(lm(outcome ~ exposure, data = data))[2],
+         ate_xz = coef(lm(outcome ~ exposure + covariate, data = data))[2],
+         cor = cor(data$exposure, data$covariate)) |>
+  select(-data, dataset)
+

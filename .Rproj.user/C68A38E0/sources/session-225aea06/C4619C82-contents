@@ -1,0 +1,31 @@
+library(brms)
+library(tidyverse)
+
+set.seed(186543)
+
+N <- 50
+nGroups <- 9
+groupSD <- 2
+groupMU <- 0
+
+withinSD <- 1.5
+
+valsMU <- rnorm(nGroups, groupMU, groupSD)
+valsMU <- c(valsMU, groupMU + 3.4 * groupSD)
+
+modelData <- tibble(group = rep(LETTERS[1:(nGroups + 1)], each = N), 
+                    mu = rep(valsMU, each = N), 
+                    sigma = withinSD)
+modelData$obs <- rnorm(1:nrow(modelData), modelData$mu, modelData$sigma)
+
+
+modelData %>% 
+  ggplot(aes(obs, group)) + 
+  ggridges::geom_density_ridges() + 
+  geom_point(aes(x = mu))
+
+# quick model 
+m <- brm(obs ~ 1 + (1 | group), 
+         data = modelData, 
+         chains = 1)
+
