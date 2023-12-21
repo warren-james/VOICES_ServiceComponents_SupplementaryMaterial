@@ -1,0 +1,7 @@
+Need to tidy up this repo a bit
+
+analysis and processing documents can go in a separate folder
+
+Maybe just another html document so people can look at the data in a nicer way? 
+Does mean that people have to download the file... but it's not like that's a hard 
+thing to do? Just adds an extra step 
