@@ -1,16 +1,6 @@
 PAPER TILE
 ================
 
-<style type="text/css">
-<!-- .header1 { -->
-<!-- color: #8a2587; -->
-<!-- } -->
-&#10;.caption {
-margin: auto;
-text-align: left;
-}
-</style>
-
 This is the landing page for the supplementary materials for the paper
 “X”. Processing and Analysis are decribed in separate files found in the
 relevent folders in this repository.

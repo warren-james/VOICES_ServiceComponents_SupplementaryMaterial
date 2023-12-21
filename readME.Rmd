@@ -12,17 +12,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{css, echo = F}
-<!-- .header1 { -->
-<!-- color: #8a2587; -->
-<!-- } -->
-
-.caption {
-margin: auto;
-text-align: left;
-}
-```
-
 ```{r, warning = F, message = F, include = F, echo = F}
 myColour <- "#8a2587"
 ```
