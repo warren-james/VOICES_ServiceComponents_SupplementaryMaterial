@@ -1,0 +1,1196 @@
+---
+title: "PAPER TITLE supplementary material"
+output: 
+  bookdown::html_document2:
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    number_sections: no
+    theme: flatly
+    highlight: kate 
+    fig.caption: yes 
+    tables: true 
+---
+
+<!-- <script>  -->
+<!--   $(document).ready(funtcion() { -->
+<!--   $head = $header('#header'); -->
+<!--   $head.prepend('<img src = \"') -->
+<!-- }) -->
+
+<!-- </script> -->
+
+<!-- <div><img src = "img/VOICES.jpg" width = "200px" align = "right"></div> -->
+
+```{css, echo = F}
+<!-- .header1 { -->
+<!-- color: #8a2587; -->
+<!-- } -->
+
+.caption {
+margin: auto;
+text-align: left;
+}
+```
+
+
+```{r, warning = F, message = F, include = F, echo = F}
+# library(countreg)
+# this library will be needed if I want to do anything with the hurdle negative binomial 
+# distribution in this sup mat? I think we will, but I'll double check with Rosemary
+
+myColour <- "#8a2587"
+```
+
+
+# Introduction 
+
+This is the supplementary material for the paper __whatever the title becomes__. There are several sections... say what the sections are... 
+
+These are the libraries used to produce this document:
+
+```{r Library, warning = F, message = F}
+library(tidyverse)
+library(tidybayes)
+library(ggridges)
+library(brms)
+library(data.table)
+library(see)
+library(formattable)
+library(reactable)
+library(english)
+library(archive)
+library(icd)
+library(lubridate)
+```
+
+# Data Linkage 
+
+Data linkage was carried out by the DaSH team at the University of Aberdeen. Several datasets were linked in order to provide the data necessary to complete the data analysis in this project. 
+
+```{r Show data linkage diagram, echo = F}
+knitr::include_graphics("img/LinkageDiagram.jpg")
+```
+
+# ICD-10 Codes 
+
+Here is the list of ICD-10 codes used to detect Serious Infections, Cancer, and Cardiovascular events. The codes can be filtered in the table by typing out the key outcome of interest in the space provided. 
+
+```{r sort ICD table, echo = F}
+Codes_SI <- c("A01", "A011", "A02", "A020", "A021", "A022", "A028", "A029", "A03", "A033", "A039", 
+              "A04", "A044", "A045", "A046", "A047", "A048", "A049", 
+              "A15", 
+              # "A150", "A152", "A153", # "A156", "A157", "A159", 
+              # "A16", # this one is weird since it's just A15 but without confirmation
+              # "A162", "A164", "A165", "A169",
+              "A170", "A171", "A192", "A199",
+              "A270", "A279", "A321", "A327", "A329", "A379", "A390", "A394", "A398", "A400", "A401",
+              # "A402", 
+              "A403", "A408", "A409", 
+              "A41", "A410", # other sepsis
+              # "A4100", "A4101", 
+              "A4102", 
+              # "A4103", "A4109", 
+              "A420", "A422", "A428", "A46", "A481", "A483", "A4901", 
+              # "A4903", "A4909",
+              "A561", "A681", "A692", "A70",
+              "B59",
+              "G001", "G002", 
+              # "G0039", 
+              "G008", "G009", "G01", "G01", "G02", "G042", "G060", "G061", "G062", 
+              "H600", "H601", "H602", "H603", "H660", "H664", "H669", "H700", "H709", "H730", 
+              "I00", "I330", "I339", 
+              "J010", "J011", "J012", "J018", "J019", "J020", "J029", "J030", "J039", "J051", "J069", "J13",
+              "J14", "J150", "J151", "J152", "J153", "J154", "J155", "J156", "J157", "J158", "J159", 
+              "J168", "J180", "J181", "J182", "J188", "J189", "J208", "J209", "J22", "J36", "J390", "J391", "J440",
+              "J690", "J698", "J849", "J851", "J852", "J860", "J869", "J950", "J985", "J698", "J849", 
+              "K223", "K353", "K358", "K37", "K570", "K571", "K572", "K574", "K610", "K611", "K612", "K613", 
+              "K614", "K630", "K631", "K650", "K658", "K659", "K750", "K800", "K803", "K804", "K810", 
+              "K811", 
+              # "K818", 
+              "K819", "K822", "K830", "K832",
+              "L010", "L011", "L020", "L021", "L022", "L023", "L024", "L028", "L029", "L030", "L031",
+              "L032", "L033", "L038", "L039", "L050", "L080",
+              "M000", "M0002", "M0008", "M0080", 
+              # "M0090",
+              "M009", # This is a code that can be found like the above
+              # "M011", 
+              "M01",
+              # "M4260,
+              "M4640", "M650", "M6510",
+              "M710", # same as above
+              # "M7260", 
+              "M726", # same as above
+              "M860", "M861", "M8630", "M8640", "M8650", "M8660", 
+              # "M8680", "M8690", 
+              "M868", "M869", # same as above
+              "N10", "N110", "N111", "N118", "N119", "N12", "N136", "N151", "N159", "N300", "N308", "N309", 
+              "N340", "N390", "N410", "N431",
+              # "N450", "N459",
+              "N45", # same as above
+              "N481", "N482", "N499", "N61", "N700", "N709", "N711", "N719", 
+              "N730", "N731", "N739", "N751", "N760", "N761", "N763", "N764", "N768", 
+              "O080", "O2330", "O231", "O233", "O234", "O235", "O239", "O411", "O85","O860", "O861", 
+              "O862", 
+              # "O863", 
+              "O864", "O868", "O911",
+              "R572", # this is septic shock... probably quite important to include
+              "T814", "T845")
+
+
+Codes_Cancer <- c("CAN1", "CAN2")
+
+
+Codes_CVD <- c("I21", "I22", "I252", "I099", "I110", "I130", 
+               # "I1320",
+               "I132", # same as above
+               "I255", "I420", "I425", 
+               "I426", "I427", "I428", "I429", "I43", "I50", "P290", "I70", "I71", "I731", "I738", 
+               "I739", "I771", "I790", 
+               # "I792",
+               "I79", # same as above
+               "K551", "K558", "K559", "Z958", "Z959", "G45", "G46", 
+               "H340", "H341", "I60", "I61", "I62", "I63", 
+               # "I64",
+               "I65", "I66", "I67", "I68")
+
+thisTable <- tibble(`Outcome Group` = rep(c("Serious Infection", "Cancer", "Cardiovascular Disease"), 
+                                          c(length(Codes_SI), length(Codes_Cancer), length(Codes_CVD))), 
+                    `ICD-10 Code` = c(Codes_SI, Codes_Cancer, Codes_CVD))
+
+
+# map_chr(c(thisTable$`ICD-10 Code`), ~{
+#   toReturn <- explain_code(.x, condense = F)
+#   if(length(toReturn) == 0){
+#     return(NA_character_)
+#   } else {
+#     return(toReturn)
+#   }
+# })
+# thisTable$Description <- explain_code(thisTable$`ICD-10 Code`, condense = F)
+thisTable$Description <- sapply(1:nrow(thisTable), function(i){
+  explain_code(thisTable$`ICD-10 Code`[i], condense = F)
+})
+
+thisTable$Description <- ifelse(thisTable$`ICD-10 Code` == "R572", "Septic Shock", thisTable$Description)
+
+reactable(thisTable, 
+          filterable = T, 
+          pagination = T,
+          highlight = TRUE, 
+          showPageSizeOptions = T,
+          pageSizeOptions = c(10, 20, 50),
+          defaultPageSize = 10)
+
+```
+
+
+# Analysis 
+
+```{r load in data, include = F, echo = F, message = F}
+# df_SI <- read_csv("data/KeyOutcomes/RanefModel_SI_Coefs.csv")
+```
+
+To demonstrate the analysis carried out in this project, the results from the paper will be used to produce some synthetic data. The procedure for fitting these data and producing any figures will also be demonstrated. 
+
+## Synthetic Data 
+
+As the analysis made use of an MCMC to produce model coefficients, the posterior draws can be used to produce some synthetic data. Below I have read in the dataset and shown a summary of the main effects from the model. Note, the model coefficients are on the log scale and so need to be interpreted in this light. 
+
+The Sex variable was coded using deviation coding so that the effect of being a Case was the average effect of men and women. Additionally, Age was scaled and centred. To get the value "AgeScaledCent", the median age for the cohort was subtracted from each person's age and this number was then divided by 10. For the Scottish Index of Multiple Deprivation (SIMD), the middle quintile (SIMD 3) was used as the baseline. For the Urban Rural split, the 2-fold classification was used and Urban was treated as the baseline condition.  
+
+```{r SIPlot, message = F, echo = F, warning = F, fig.cap = "This figure shows the posterior distributions for the different effects within the model. The points represent the mode with the lines show the 95% Credibility Interval. Please note, I have removed the Intercept term for clarity", fig.height = 10}
+df_SI <- read_csv("data/KeyOutcomes/RanefModel_SI_Coefs.csv")
+df_SI_main <- df_SI %>% 
+  select(contains("b_"))
+
+df_SI_main %>% 
+  gather(1:ncol(.), 
+         key = "Param", 
+         value = "Coef") %>% 
+  mutate(Param = factor(Param, 
+                        levels = c("b_TypeExposed", "b_SexDev1", "b_AgeScaledCent",
+                                   "b_SIMDFac5", "b_SIMDFac4" ,"b_SIMDFac2" ,"b_SIMDFac1",
+                                   "b_UrbRurRural", "b_TypeExposed:SexDev1" ,"b_TypeExposed:AgeScaledCent" ,
+                                   "b_TypeExposed:SIMDFac5", "b_TypeExposed:SIMDFac4", "b_TypeExposed:SIMDFac2",
+                                   "b_TypeExposed:SIMDFac1", "b_TypeExposed:UrbRurRural",
+                                   "b_SexDev1:AgeScaledCent", "b_SexDev1:SIMDFac5", "b_SexDev1:SIMDFac4",
+                                   "b_SexDev1:SIMDFac2", "b_SexDev1:UrbRurRural", "b_AgeScaledCent:SIMDFac5",
+                                   "b_AgeScaledCent:SIMDFac4", "b_AgeScaledCent:SIMDFac2", "b_AgeScaledCent:SIMDFac1",
+                                   "b_AgeScaledCent:UrbRurRural", "b_SIMDFac5:UrbRurRural", "b_SIMDFac4:UrbRurRural",
+                                   "b_SIMDFac2:UrbRurRural", "b_SIMDFac1:UrbRurRural" 
+                        ))) %>%# order the coefficients
+  filter(Param != "b_Intercept") %>%
+  ggplot(aes(Coef, Param)) + 
+  geom_density_ridges(colour = "transparent", 
+                      fill = myColour, 
+                      alpha = .3) + 
+  stat_pointinterval(point_interval = mode_hdci, 
+                      colour = myColour, 
+                      .width = .95, 
+                     interval_size_range = c(.25, .5)) + 
+  geom_vline(xintercept = 0, 
+             linetype = "longdash") + 
+  scale_y_discrete(limits = rev) +
+  theme_minimal() + 
+  coord_cartesian(expand = F)
+```
+
+To produce some synthetic data, only the intercept and Type coefficients to make an example dataset and show the model fitting procedure. The data cleaning procedure will also be demonstrated. For the sake of this example, a subset of the Health Boards included in the real analysis will also be included. The N for each group will not be true to the actual data. 
+
+```{r produce synthetic data, echo = F, message = F, warning = F}
+# set seed for reproducibility 
+set.seed(495)
+
+# end Date of study 
+endDate <- as.Date("2020-10-31") 
+
+ChangeTime <- function(og_date, thisYears){
+  if(thisYears[1] < 0){
+    sub <- T
+    thisYears <- abs(thisYears)
+  } else {
+    sub <- F
+  }
+  
+  # sort year value
+  floorYears <- floor(thisYears)
+
+  # sort month value
+  thisMonth <- (thisYears - floorYears) * 12
+  floorMonth <- floor(thisMonth)
+  
+  # sort day value
+  thisDay <- thisMonth - floorMonth
+  thisDay <- round(thisDay * 28)
+  
+  # have to do the months as days because it goes wonky with certain dates otherwise 
+  if(sub){
+    og_date -(years(floorYears) + days(floorMonth * 28) + days(thisDay)) 
+  } else {
+    og_date + (years(floorYears) + days(floorMonth * 28) + days(thisDay))   
+  }
+}
+
+# set the N per group
+N <- 500
+
+# Two levels for type 
+Types <- c("Exposed", "Control")
+
+# some Health boards 
+boards <- c("HB 02", "HB 06", "HB 01", "HB 08", "HB 07")
+
+# Setup posterior values 
+post_rand <- df_SI %>% 
+  select_if(grepl("r_", colnames(.))) %>% 
+  rowid_to_column(var = "iter") %>% 
+  gather(2:ncol(.), 
+         key = "Param", 
+         value = "Coef") %>% 
+  separate(Param, 
+           into = c("board", "Param"), 
+           sep = ",") %>% 
+  mutate(board = str_replace(str_remove(board, "r_board\\["), "\\.", " "), 
+         Param = str_remove(Param, "\\]"))
+  
+post_base <- df_SI %>% 
+  select_if(grepl("b_", colnames(.))) %>% 
+  rowid_to_column(var = "iter") %>% 
+  gather(2:ncol(.), 
+         key = "Param", 
+         value = "BaseCoef") %>% 
+  mutate(Param = str_remove(Param, "b_"))
+
+post <- post_rand %>% 
+  left_join(post_base) %>% 
+  mutate(Coef = Coef + BaseCoef) %>% 
+  filter(Param %in% c("Intercept", "TypeExposed")) %>% 
+  select(-BaseCoef) %>% 
+  spread(Param, Coef)
+
+# create Dataset 
+minTime <- .1
+maxTime <- 25
+Noise <- .5
+
+df_synth <- expand_grid(subj = 1:N, 
+                        Type = Types, 
+                        board = boards) %>% 
+  mutate(iter = sample(1:nrow(df_SI), nrow(.), replace = T), 
+         TimeYears = runif(nrow(.), minTime, maxTime)) %>% 
+  left_join(post) %>% 
+  mutate(Noise = rnorm(nrow(.), 0, Noise), 
+         lambda = Intercept + (Type == "Exposed") * TypeExposed + Noise,
+         Rate = exp(lambda),
+         index_date = ChangeTime(endDate, -TimeYears))
+
+# functions for making the observations 
+# generate the times for positive events
+# TODO: There's a problem here that needs to be fixed
+# At the moment, it undercounts by one as we're effectively assuming that 
+# there was an event right at the beginning... 
+# so this could be rectified by saying that the index_date for everyone was 
+# and event as well if they had an event? 
+# So... effectively, add an event with an occurrence of 0?
+poisProc <- function(Rate, timeObs){
+  count <- 0
+  timeSum <- 0
+  outTimes <- c()
+  running <- T
+  while(running){
+    thisTime <- rexp(1, Rate)
+    timeSum <- timeSum + thisTime
+    if(timeSum > timeObs){
+      running <- F
+    } else {
+      count <- count + 1
+      outTimes <- c(outTimes, thisTime)
+    }
+  }
+  return(outTimes)
+  # return(ifelse(count > 0, c(0, outTimes), outTimes))
+}
+
+# make data like the SMR datasets
+genVisits <- function(nExtra, thisRate, thisTime){
+  posVisits <- poisProc(thisRate, thisTime)
+  ExtraVisits <- runif(nExtra, 1e-4, thisTime)
+  
+  # combine into a tibble for now... 
+  output <- tibble(posEvent = rep(c(1, 0), c(length(posVisits), nExtra)),
+                   time = c(posVisits, ExtraVisits)) %>% 
+    arrange(time)
+  
+  return(list(posEvent = output$posEvent,
+              EventTime = output$time))
+}
+
+# create the event time data 
+ExtraEvents <- 4
+toBind <- t(sapply(1:nrow(df_synth), function(i){
+  genVisits(ExtraEvents, df_synth$Rate[i], df_synth$TimeYears[i])
+})) 
+
+# add in the times data 
+df_synth <- df_synth %>% 
+  cbind(toBind) %>% 
+  unnest(c(posEvent, EventTime)) %>% 
+  mutate(dateEvent = ChangeTime(index_date, EventTime)) %>% 
+  select(subj, Type, board, TimeYears, index_date, dateEvent, Rate, EventTime, posEvent)
+
+# add in some ICD-10 codes 
+df_synth$mcon <- sapply(1:nrow(df_synth), function(i){
+  if(df_synth$posEvent[i] == 1){
+    sample(Codes_SI, 1)
+  } else {
+    sample(c(Codes_Cancer, Codes_CVD), 1)
+  }
+})
+
+df_synth$ocon <- sapply(1:nrow(df_synth), function(i){
+  nOthers <- sample(0:5, 1)
+  if(df_synth$posEvent[i] == 1){
+    output <- sample(Codes_SI, nOthers)
+  } else {
+    output <- sample(c(Codes_Cancer, Codes_CVD), nOthers)
+  }
+  paste(c(output, rep("NA", 5 - nOthers)), collapse = "|")
+})
+df_synth <- df_synth %>% 
+  separate(ocon, into = c("ocon1", "ocon2", "ocon3", "ocon4", "ocon5"), sep = "[|]")
+
+```
+
+
+```{r temp plot, include = F, echo = F}
+temp <- df_synth %>% 
+  group_by(subj, index_date, Type, board, TimeYears, Rate) %>% 
+  summarise(nEvents = sum(posEvent)) %>% 
+  mutate(rate = nEvents/TimeYears) 
+
+# temp %>% 
+#   ggplot(aes(Type, rate, 
+#              fill = Type)) + 
+#   geom_jitter(alpha = .3, 
+#               pch = 21, 
+#               colour = "transparent")
+
+# temp %>% 
+#   ggplot(aes(rate, fill = Type)) + 
+#   geom_histogram(aes(y = ..density..), 
+#                  position = "dodge",
+#                  binwidth = .05)
+
+# Probably the smarter solution... 
+# make a plot that shows the variance over time for how many visits we'd expect to see with a poisson distribution 
+rollWindow <- 100
+tibble(time = seq(minTime, maxTime, .2), 
+       Control = mean(post_base$BaseCoef[post_base$Param == "Intercept"]),
+       Exposed = mean(post_base$BaseCoef[post_base$Param == "TypeExposed"])) %>% 
+  mutate(Exposed = Control + Exposed) %>% 
+  gather(Control:Exposed, 
+         key = "Type", 
+         value = "baseRate") %>% 
+  mutate(muRate = exp(baseRate + log(time)),
+         muObs = qpois(.5, muRate),
+         .upr = qpois(.975, muRate), 
+         .lwr = qpois(.025, muRate)) %>% 
+  ggplot(aes(time, muObs, 
+             colour = Type, 
+             fill = Type)) + 
+  geom_path() + 
+  geom_ribbon(aes(ymin = .lwr, ymax = .upr), 
+              alpha = .1,
+              colour = "transparent") + 
+  geom_point(data = temp, 
+             aes(TimeYears, nEvents),
+             alpha = .1) + 
+  geom_path(data = temp %>% 
+              arrange(Type, TimeYears) %>% 
+              group_by(Type) %>% 
+              mutate(test = zoo::rollmean(nEvents, rollWindow, na.pad = T)), 
+            aes(TimeYears, test),
+            linetype = "longdash") + 
+  see::scale_colour_flat() + 
+  see::scale_fill_flat() + 
+  facet_wrap(~Type) +
+  theme_minimal()
+
+nRowsToShow <- 20
+```
+
+Here are the first `r nRowsToShow` rows of the syntehtic data: 
+
+```{r, echo = F}
+reactable(df_synth %>% 
+            select(subj, Type, board, index_date, TimeYears, dateEvent, mcon:ocon5, posEvent) %>% 
+            mutate(TimeYears = round(TimeYears, digits = 2)) %>% 
+            head(nRowsToShow))
+```
+
+## Data modelling 
+
+```{r model the data, cache = T, message = F, warning = F}
+modelData <- df_synth %>% 
+  group_by(subj, index_date, Type, board, TimeYears, Rate) %>% 
+  summarise(nEvents = sum(posEvent))
+
+# setup the brms model 
+# might want to cache this to save time knitting in future? 
+m_demo <- brm(nEvents ~ Type + offset(log(TimeYears)) + (Type | board), 
+              data = modelData, 
+              family = "poisson", 
+              iter = 2000, 
+              warmup = 1000, 
+              chains = 1,
+              control = list(adapt_delta = .9))
+  
+```
+
+Before doing anything else, we can check to see if the outputs look reasonable 
+
+```{r show model summary}
+summary(m_demo)
+```
+
+The fixed effects for the model can be seen by using the `fixef()` function from the `brms` package:
+
+```{r show fixed effects}
+fixef(m_demo)
+```
+
+Similarly, the random effects can be observed using the `ranef()` function from `brms`
+
+```{r show random effects}
+ranef(m_demo)
+```
+
+However, these values aren't that informative on their own as the fixed effects are on a log scale, and the random effects are relative to the overall effect. 
+
+Now we have the model, we can produce figures to compare the different health boards to the Scottish average:
+
+<!-- we're not interested in the raw rates, but the rate ratios instead. So for this plot, I'll show the IRR for each health board and then the average effect -->
+
+```{r show model results, message = F, warning = F, echo = F}
+getPost <- function(thisModel){
+  # get model posterior
+  post <- as_draws_df(thisModel) %>% 
+    select(-c(lprior, .chain, .draw, lp__)) %>%
+    select(.iteration, everything()) %>%
+    gather(2:ncol(.), 
+           key = "Param", 
+           value = "Coef") %>% 
+    filter(!grepl(paste(c("sd_", "cor_"), collapse = "|"), Param))
+  
+  # split to base effect and random effects 
+  post_base <- post[!grepl("r_", post$Param),] %>% 
+    mutate(Param = str_remove(Param, "b_")) %>% 
+    rename(baseCoef = Coef)
+  post_rand <- post[grepl("r_", post$Param),] %>% 
+    separate(Param, 
+             into = c("remove", "Param"),
+             sep = "\\[") %>% 
+    select(-remove) %>% 
+    separate(Param, 
+             into = c("group", "Param"), 
+             sep = ",") %>% 
+    mutate(Param = str_remove(Param, "\\]")) %>% 
+    left_join(post_base) %>% 
+    mutate(Coef = Coef + baseCoef) %>% 
+    select(-baseCoef)
+  
+  return(list(post_base = post_base, 
+              post_rand = post_rand))
+}
+
+# function to make plots 
+IRRplot <- function(thisModel, thisEffect, thisColour = "#8a2587"){
+  post <- getPost(thisModel)
+  
+  post_base <- post$post_base %>% 
+    filter(Param == thisEffect) %>% 
+    mutate(baseCoef = exp(baseCoef))
+  post_rand <- post$post_rand %>% 
+    filter(Param == thisEffect) %>% 
+    mutate(Coef = exp(Coef))
+  
+  post_base_summ <- post_base %>% 
+    mode_hdci(baseCoef)
+  
+  # make plot 
+  post_rand %>% 
+    ggplot(aes(Coef, group)) + 
+    geom_vline(xintercept = 1, 
+               linetype = "solid") + 
+    geom_vline(xintercept = post_base_summ$baseCoef, 
+               linetype = "longdash",
+               colour = thisColour) +
+    annotate("rect", 
+             xmin = post_base_summ$.lower, 
+             xmax = post_base_summ$.upper, 
+             ymin = -Inf, ymax = Inf,
+             alpha = .3, fill = thisColour) +
+    geom_density_ridges(alpha = .3, 
+                        fill = thisColour, 
+                        colour = "transparent") + 
+    stat_pointinterval(point_interval = "mode_hdci",
+                       .width = .95,
+                       colour = thisColour) +
+    theme_minimal() + 
+    scale_y_discrete("") + 
+    scale_x_continuous("IRR (95% confidence intervals)", limits = c(0, NA)) + 
+    coord_cartesian(expand = F)
+}
+
+
+IRRplot(m_demo, "TypeExposed") 
+```
+
+Maybe something to show the difference in the expected rates? That way we can compare the intercept values and the raw rates in a way that let's us see whether the IRR is due to a deflated control rate? 
+
+```{r testing a new figure for raw rates, warning = F, message = F, echo = F}
+compRates <- function(thisModel, theseColours = c("#258A28", "#8a2587")) {
+  post <- getPost(thisModel)
+  
+  post_rand <- post$post_rand %>% 
+    spread(Param, Coef) %>% 
+    mutate(TypeExposed = TypeExposed + Intercept) %>% 
+    gather(Intercept:TypeExposed, 
+           key = "Param", 
+           value = "Coef") %>% 
+    mutate(Coef = exp(Coef),
+           Param = ifelse(Param == "Intercept", "Control", "Exposed"))
+  post_base <- post$post_base %>% 
+    spread(Param, baseCoef) %>% 
+    mutate(TypeExposed = TypeExposed + Intercept) %>% 
+    gather(Intercept:TypeExposed, 
+           key = "Param", 
+           value = "Coef") %>% 
+    mutate(Coef = exp(Coef),
+           Param = ifelse(Param == "Intercept", "Control", "Exposed"))
+  
+  post_base_summ <- post_base %>% 
+    group_by(Param) %>% 
+    mode_hdci(Coef)
+  
+  post_rand %>% 
+    ggplot(aes(Coef, group, 
+               fill = Param, 
+               colour = Param)) +
+    geom_vline(data = post_base_summ,
+               aes(xintercept = Coef, colour = Param),
+               linetype = "longdash") +
+    geom_density_ridges(alpha = .3,
+                        colour = "transparent") +
+    stat_pointinterval(point_interval = "mode_hdci",# .width = .95,
+                       position = position_dodge(.25)) +
+    scale_fill_manual(values = theseColours) +
+    scale_colour_manual(values = theseColours) + 
+    geom_rect(data = post_base_summ,
+              aes(xmin = .lower, xmax = .upper,
+                  y = 0),
+              ymin = -Inf, ymax = Inf,
+              alpha = .3,
+              colour = "transparent") +
+    theme_minimal() + 
+    scale_y_discrete("") + 
+    scale_x_continuous("Rate per year (95% confidence intervals)", limits = c(0, NA)) + 
+    coord_cartesian(expand = F) +
+    theme(legend.position = "bottom")
+}
+
+compRates(m_demo)
+```
+
+For the sake of completeness, the estimates for the real data can be seen below:
+
+```{r show real model results, echo = F, message = F, warning = F, fig.height = 8}
+getPost_Draws <- function(thisDraws){
+  thisDraws <- thisDraws %>% 
+    rowid_to_column(var = ".iter") %>% 
+    gather(2:ncol(.), 
+          key = "Param", 
+          value = "Coef") %>% 
+    filter((grepl("TypeExposed", Param) | grepl("Intercept", Param)) & !grepl(":", Param)) %>% 
+    mutate(Coef = as.numeric(Coef))
+  
+  # Get values for coefs 
+  post_base <- thisDraws[grepl("b_", thisDraws$Param),] %>% 
+    mutate(Param = str_remove(Param, "b_"))
+  post_rand <- thisDraws[!grepl("b_", thisDraws$Param),] %>%
+    separate(Param,
+             into = c("remove", "Param"),
+             sep = "\\[") %>%
+    select(-remove) %>%
+    separate(Param,
+             into = c("group", "Param"),
+             sep = ",") %>%
+    mutate(Param = str_remove(Param, "\\]")) %>%
+    left_join(post_base %>%
+                rename(baseCoef = Coef)) %>%
+    mutate(Coef = Coef + baseCoef) %>%
+    select(-baseCoef)
+  
+  # Put them on the rate scale 
+  post_base <- post_base %>% 
+    spread(Param, Coef) %>% 
+    mutate(TypeExposed = TypeExposed + Intercept) %>% 
+    gather(TypeExposed:Intercept, 
+           key = "Param", 
+           value = "Coef") %>% 
+    mutate(Param = ifelse(Param == "Intercept", "Control", "Exposed"),
+           Coef = exp(Coef))
+  post_rand <- post_rand %>% 
+    spread(Param, Coef) %>% 
+    mutate(TypeExposed = TypeExposed + Intercept) %>% 
+    gather(TypeExposed:Intercept, 
+           key = "Param", 
+           value = "Coef") %>% 
+    mutate(Param = ifelse(Param == "Intercept", "Control", "Exposed"),
+           Coef = exp(Coef))
+  return(list(post_rand = post_rand, 
+              post_base = post_base))
+}
+
+realPost <- function(thisDraws, theseColours = c("#258A28", "#8a2587")){
+  post <- getPost_Draws(thisDraws)
+  post_base <- post$post_base
+  post_rand <- post$post_rand
+  post_base_summ <- post_base %>% 
+    group_by(Param) %>% 
+    mode_hdci(Coef)
+  
+  post_rand %>% 
+    ggplot(aes(Coef, group, 
+               fill = Param, 
+               colour = Param)) + 
+    geom_vline(data = post_base_summ, 
+               aes(xintercept = Coef, 
+                   colour = Param), 
+               linetype = "longdash", 
+               show.legend = F) +
+    geom_rect(data = post_base_summ, 
+              aes(xmin = .lower, xmax = .upper, 
+                  ymin = -Inf, ymax = Inf, 
+                  y = 0),
+              alpha = .3, 
+              colour = "transparent") +
+    geom_density_ridges(alpha = .3, 
+                        colour = "transparent") +
+    stat_pointinterval(point_interval = "mode_hdci", #.width = .95,
+                       position = position_dodge(.25), 
+                       show.legend = F) +
+    scale_fill_manual(values = theseColours) +
+    scale_colour_manual(values = theseColours) + 
+    theme_minimal() +
+    theme(legend.position = "bottom", 
+          legend.title = element_blank()) +
+    scale_y_discrete("") + 
+    scale_x_continuous("Rate per year (95% confidence intervals)", limits = c(0, NA)) + 
+    coord_cartesian(expand = F)
+}
+
+realPost(df_SI) 
+```
+
+Please note that the full model adjusted for many other variables and interactions, so the values in this output reflect the "average" rates for an average individual from each group. 
+
+We can also look at how expected number of events given time in the study. First we can see how this looks for the synthetic data: 
+
+```{r Show nEvents with time Synth, echo = F, message = F, warning = F, fig.height = 8}
+nEventsTime_synth <- function(thisModel, thisData, timeRes = 2, theseColours = c("#258A28", "#8a2587")){
+  post <- getPost(thisModel)
+  post_base <- post$post_base
+  post_rand <- post$post_rand
+  
+  post_rand <- post$post_rand %>% 
+    spread(Param, Coef) %>% 
+    mutate(TypeExposed = TypeExposed + Intercept) %>% 
+    gather(Intercept:TypeExposed, 
+           key = "Param", 
+           value = "Coef") %>% 
+    mutate(Coef = exp(Coef),
+           Param = ifelse(Param == "Intercept", "Control", "Exposed"))
+  post_base <- post$post_base %>% 
+    spread(Param, baseCoef) %>% 
+    mutate(TypeExposed = TypeExposed + Intercept) %>% 
+    gather(Intercept:TypeExposed, 
+           key = "Param", 
+           value = "Coef") %>% 
+    mutate(Coef = exp(Coef),
+           Param = ifelse(Param == "Intercept", "Control", "Exposed"))
+  
+  post_base_summ <- post_base %>% 
+    group_by(Param) %>% 
+    mode_hdci(Coef)
+  post_rand_summ <- post_rand %>% 
+    group_by(Param, group) %>% 
+    mode_hdci(Coef)
+  
+  post_base_Overtime <- expand_grid(time = seq(0, max(thisData$TimeYears), length.out = timeRes), 
+                                    post_base_summ) %>% 
+    mutate(mu   = qpois(.5, exp(log(Coef) + log(time))), 
+           mu.upr = qpois(.975, exp(log(Coef) + log(time))), 
+           mu.lwr = qpois(.025, exp(log(Coef) + log(time))),
+           line.mu = exp(log(Coef) + log(time)),
+           line.upr = exp(log(.upper) + log(time)), 
+           line.lwr = exp(log(.lower) + log(time)))
+  post_rand_Overtime <- expand_grid(time = seq(0, max(thisData$TimeYears), length.out = timeRes), 
+                                    post_rand_summ) %>% 
+    mutate(mu   = qpois(.5, exp(log(Coef) + log(time))), 
+           mu.upr = qpois(.975, exp(log(Coef) + log(time))), 
+           mu.lwr = qpois(.025, exp(log(Coef) + log(time))),
+           line.mu = exp(log(Coef) + log(time)),
+           line.upr = exp(log(.upper) + log(time)), 
+           line.lwr = exp(log(.lower) + log(time)))
+  
+  # Sort out counts for rawData 
+  thisData <- thisData %>% 
+    arrange(board, Type, TimeYears) %>% 
+    group_by(board, Type) %>%
+    mutate(rollMean = zoo::rollmean(nEvents, rollWindow, na.pad = T)) %>% 
+    rename(Param = Type,
+           group = board) %>% 
+    mutate(group = str_replace(group, " ", "\\."))
+  
+  # make the plot 
+  post_rand_Overtime %>% 
+    ggplot(aes(time, mu, 
+               colour = Param, 
+               fill = Param)) + 
+    geom_point(data = thisData, 
+               aes(TimeYears, nEvents),
+               pch = 21, 
+               alpha = .1, 
+               colour = "transparent") +
+    # geom_path(aes(y = line.mu),
+    #           linetype = "solid") +
+    # geom_ribbon(aes(ymin = line.lwr, 
+    #                 ymax = line.upr), 
+    #             alpha = .3, 
+    #             colour = "transparent") +
+    # geom_path(data = thisData, 
+    #           aes(TimeYears, rollMean),
+    #           linetype = "longdash") +
+    geom_path() +
+    geom_path(data = post_base_Overtime,
+              linetype = "longdash") +
+    geom_ribbon(aes(ymin = mu.lwr, ymax = mu.upr),
+                alpha = .3,
+                colour = "transparent") +
+    scale_colour_manual(values = theseColours) + 
+    scale_fill_manual(values = theseColours) + 
+    facet_grid(group~Param) + 
+    theme_minimal() + 
+    theme(legend.position = "bottom")
+  
+}
+
+```
+
+## Example figures {.tabset}
+
+### smoothed figure 
+```{r, echo = F, message = F, warning = F, fig.height = 8}
+nEventsTime_synth(m_demo, modelData)
+```
+
+### step figure 
+
+```{r, echo = F, message = F, warning = F, fig.height = 8}
+nEventsTime_synth(m_demo, modelData, 1000)
+```
+
+## Figures for real data {.tabset}
+
+And now these are the figures for the real data coefficients:
+
+```{r show nEvents with time, echo = F, warning = F, message = F, fig.height = 10}
+nEventsTime <- function(thisDraws, timeRange = c(0, 24), timeRes = 2, theseColours = c("#258A28", "#8a2587")){
+  post <- getPost_Draws(thisDraws)
+  post_base <- post$post_base
+  post_rand <- post$post_rand
+  
+  post_base_summ <- post_base %>% 
+    group_by(Param) %>% 
+    mode_hdci(Coef)
+  post_rand_summ <- post_rand %>% 
+    group_by(Param, group) %>% 
+    mode_hdci(Coef)
+  
+  post_base_Overtime <- expand_grid(time = seq(min(timeRange), max(timeRange), length.out = timeRes), 
+                                    post_base_summ) %>% 
+    mutate(mu   = qpois(.5, exp(log(Coef) + log(time))), 
+           mu.upr = qpois(.975, exp(log(Coef) + log(time))), 
+           mu.lwr = qpois(.025, exp(log(Coef) + log(time))))
+  post_rand_Overtime <- expand_grid(time = seq(min(timeRange), max(timeRange), length.out = timeRes), 
+                                    post_rand_summ) %>% 
+    mutate(mu   = qpois(.5, exp(log(Coef) + log(time))), 
+           mu.upr = qpois(.975, exp(log(Coef) + log(time))), 
+           mu.lwr = qpois(.025, exp(log(Coef) + log(time))))
+  
+  # make the plot 
+  post_rand_Overtime %>% 
+    ggplot(aes(time, mu, 
+               colour = Param, 
+               fill = Param)) + 
+    geom_path() + 
+    geom_path(data = post_base_Overtime, 
+              linetype = "longdash") + 
+    geom_ribbon(aes(ymin = mu.lwr, ymax = mu.upr), 
+                alpha = .3, 
+                colour = "transparent") +
+    scale_colour_manual(values = theseColours) + 
+    scale_fill_manual(values = theseColours) + 
+    facet_wrap(~group, 
+               ncol = 3) + 
+    theme_minimal() + 
+    theme(legend.position = "bottom")
+  
+}
+
+```
+
+
+### smoothed figure
+
+```{r, echo = F, warning = F, message = F, fig.height = 10}
+nEventsTime(df_SI)
+```
+
+
+### step figure
+```{r, echo = F, warning = F, message = F, fig.height = 10}
+nEventsTime(df_SI, timeRes = 1000)
+```
+
+```{r another idea just showing the average estimate, echo = F, include = F}
+demoMeanRates <- function(thisModel, mainData, rollWindow = 100, theseColours = c("#258A28", "#8a2587")){
+  post <- getPost(thisModel)
+  post_base <- post$post_base
+  post_rand <- post$post_rand
+  
+  post_baseSumm <- post_base %>% 
+    spread(Param, baseCoef) %>% 
+    mutate(TypeExposed = Intercept + TypeExposed) %>% 
+    gather(Intercept:TypeExposed, 
+           key = "Param", 
+           value = "Coef") %>%
+    group_by(Param) %>% 
+    mode_hdci(Coef) %>% 
+    mutate(across(c(Coef, .lower, .upper), ~exp(.x))) %>% 
+    expand_grid(time = c(0, max(mainData$TimeYears))) %>% 
+    mutate(across(c(Coef, .lower, .upper), ~ exp(log(.x) + log(time)), .names = '{.col}_Rate')) 
+  
+  post_randSumm <- post_rand %>% 
+    spread(Param, Coef) %>% 
+    mutate(TypeExposed = Intercept + TypeExposed) %>% 
+    gather(Intercept:TypeExposed, 
+           key = "Param", 
+           value = "Coef") %>%
+    group_by(Param, group) %>% 
+    mode_hdci(Coef) %>% 
+    mutate(across(c(Coef, .lower, .upper), ~exp(.x))) %>% 
+    expand_grid(time = c(0, max(mainData$TimeYears))) %>% 
+    mutate(across(c(Coef, .lower, .upper), ~ exp(log(.x) + log(time)), .names = '{.col}_Rate'),
+           pUpper = qpois(.975, exp(log(Coef) + log(time))),
+           pLower = qpois(.025, exp(log(Coef) + log(time)))) 
+  
+  # return(post_randSumm)
+  # sort out main data 
+  mainData <- mainData %>% 
+    arrange(Type, board, TimeYears) %>% 
+    group_by(Type, board) %>% 
+    mutate(rollMean = zoo::rollmean(nEvents, rollWindow, na.pad = T)) %>% 
+    rename(Param = Type,
+           group = board) %>% 
+    mutate(Param = ifelse(Param == "Exposed", "TypeExposed", "Intercept"))
+  
+  
+  post_randSumm %>% 
+    mutate(group = str_replace(group, "\\.", " ")) %>%
+    ggplot(aes(time, Coef_Rate, 
+               colour = Param, fill = Param)) + 
+    geom_point(data = mainData, 
+               aes(TimeYears, nEvents), 
+               alpha = .1, 
+               pch = 21, 
+               colour ="transparent") +
+    geom_path(linetype = "longdash") +
+    geom_ribbon(aes(ymin = .lower_Rate, ymax = .upper_Rate),
+                alpha = .2,
+                colour = "transparent") +
+    geom_ribbon(aes(ymin = pLower, ymax = pUpper), 
+                alpha = .2, 
+                colour = "transparent") +
+    geom_path(data = mainData, 
+              aes(x = TimeYears, y = rollMean)) +
+    scale_colour_manual(values = theseColours) + 
+    scale_fill_manual(values = theseColours) + 
+    facet_grid(Param~group) + 
+    theme_minimal() + 
+    theme(legend.position = "bottom")
+  
+  
+  
+}
+
+demoMeanRates(m_demo, modelData, 150)
+```
+
+## Show the raw random effects 
+
+<!-- As things are on a log scale, I think we can see what the rate ratio for each health board is? So... we can say what the ratio is for the random effects compared to the main effect? So how much larger/smaller is the effect than the main effect? -->
+
+```{r testing idea to show the ratio for main to random effect, echo = F, warning = F}
+# I'll do this for the fake and real data just to compare the two? 
+
+# Real results 
+realRandomEffs <- function(thisDraws, eff = "TypeExposed", Ratio = T, thisFill = "#8a2587"){
+  thisDraws <- thisDraws %>% 
+    rowid_to_column(var = ".iter") %>% 
+    gather(2:ncol(.), 
+          key = "Param", 
+          value = "Coef") %>% 
+    filter((grepl("TypeExposed", Param) | grepl("Intercept", Param)) & !grepl(":", Param)) %>% 
+    mutate(Coef = as.numeric(Coef))
+  
+  # Get values for coefs 
+  post_base <- thisDraws[grepl("b_", thisDraws$Param),] %>% 
+    mutate(Param = str_remove(Param, "b_")) %>% 
+    filter(Param == eff)
+  post_rand <- thisDraws[!grepl("b_", thisDraws$Param),] %>%
+    separate(Param,
+             into = c("remove", "Param"),
+             sep = "\\[") %>%
+    select(-remove) %>%
+    separate(Param,
+             into = c("group", "Param"),
+             sep = ",") %>%
+    mutate(Param = str_remove(Param, "\\]")) %>% 
+    filter(Param == eff)
+  
+  # return(post_rand)
+  
+  # The random effects are relative to the main effect, So... I think this is the best way to do this as 
+  # we don't want to see the range IRR values compared to the controls, but compared to the value calculated 
+  # as the main effect... that makes sense to current me... 
+  
+  if(Ratio){
+    post_rand$value = exp(post_rand$Coef)
+    xInt <- 1
+  } else {
+    post_rand$value = post_rand$Coef
+    xInt <- 0
+  }
+  
+  post_rand %>% 
+    ggplot(aes(value, group)) + 
+    geom_density_ridges(alpha = .3,
+                        colour = "transparent", 
+                        fill = thisFill) + 
+    stat_pointinterval(point_interval = "mode_hdci", 
+                       colour = thisFill) + 
+    geom_vline(xintercept = xInt, 
+               linetype = "longdash") + 
+    theme_minimal()
+}
+
+realRandomEffs(df_SI)
+
+
+```
+
+```{r check raw coef with scaled coefs to see difference, echo = F, include = F}
+# Plot the Intercept and Type Exposed values to look at the correlation
+# I think this needs to be fixed so things are on the right scale... 
+# At the moment, I think that the Exposed is the value with the Intercept added on... so it's no surprise they look 
+# correlated at the moment... they pretty much are... 
+# TODO: 
+# something isn't quite right here... which is annoying... not sure how necessary this plot is 
+# but we're not getting the right values for the random effects... 
+compRawScaled <- function(thisModel, thisColour = c("#258A28", "#8a2587")){
+  post <- getPost(thisModel)
+  post_rand <- post$post_rand 
+  post_base <- post$post_base 
+  
+  # subtract the post_base effects from the post_rand?
+  post_rand <- post_rand %>% 
+    left_join(post_base) %>% 
+    mutate(Coef = Coef - baseCoef) %>% 
+    select(-baseCoef)
+    
+  
+  post_base$group <- "Overall"
+
+
+  boundData <- rbind(post_rand,
+                     post_base %>% 
+                       rename(Coef = baseCoef))
+  # return(boundData %>% spread(Param, Coef))
+  boundDataSumm <- boundData %>%
+    group_by(group, Param) %>%
+    mode_hdci(Coef) 
+  
+  # return(boundDataSumm)
+
+  # return(boundDataSumm)
+  # print(boundDataSumm$Coef[boundData$Param == "Intercept" & boundData$group == "Overall"])
+  boundData %>%
+    spread(Param, Coef) %>%
+    ggplot(aes(Intercept, TypeExposed)) +
+    geom_point(alpha = .3,
+               pch = 21) +
+    # geom_vline(xintercept = boundDataSumm$Coef[boundDataSumm$Param == "Intercept" & boundDataSumm$group == "Overall"],
+    #            colour = thisColour[1],
+    #            linetype = "longdash") +
+    # annotate("rect",
+    #          xmin = boundDataSumm$.lower[boundDataSumm$Param == "Intercept" & boundDataSumm$group == "Overall"],
+    #          xmax = boundDataSumm$.upper[boundDataSumm$Param == "Intercept" & boundDataSumm$group == "Overall"],
+    #          ymin = -Inf, ymax = Inf,
+    #          fill = thisColour[1],
+    #          alpha = .1) +
+    # geom_hline(yintercept = boundDataSumm$Coef[boundDataSumm$Param == "TypeExposed" & boundDataSumm$group == "Overall"],
+    #            colour = thisColour[2],
+    #            linetype = "longdash") +
+    # annotate("rect",
+    #          ymin = boundDataSumm$.lower[boundDataSumm$Param == "TypeExposed" & boundDataSumm$group == "Overall"],
+    #          ymax = boundDataSumm$.upper[boundDataSumm$Param == "TypeExposed" & boundDataSumm$group == "Overall"],
+    #          xmin = -Inf, xmax = Inf,
+    #          fill = thisColour[2],
+    #          alpha = .1) +
+    geom_rect(data = boundDataSumm[boundDataSumm$Param == "Intercept",],
+              aes(xmin = .lower, xmax = .upper,
+                  x = NULL, y = NULL,
+                  ymin = -Inf, ymax = Inf),
+              fill = thisColour[1],
+              alpha = .2) +
+    geom_rect(data = boundDataSumm[boundDataSumm$Param == "TypeExposed",],
+              aes(ymin = .lower, ymax = .upper,
+                  x = NULL, y = NULL,
+                  xmin = -Inf, xmax = Inf),
+              fill = thisColour[2],
+              alpha = .2) +
+    geom_vline(data = boundDataSumm[boundDataSumm$Param == "Intercept",],
+               aes(xintercept = Coef),
+               colour = thisColour[1]) +
+    geom_hline(data = boundDataSumm[boundDataSumm$Param == "TypeExposed",],
+               aes(yintercept = Coef),
+               colour = thisColour[2]) +
+    facet_wrap(~group, scales = "free") +
+    theme_minimal()
+}
+
+compRawScaled(m_demo)
+
+```
+
+Same as the above, but on the real data... 
+
+```{r}
+compRawDraws <- function(thisDraws, thisColour = c("#258A28", "#8a2587")){
+  post <- getPost_Draws(thisDraws)
+  
+  toPlot <- rbind(post$post_base %>% 
+                    mutate(group = "overall"),
+                  post$post_rand) %>% 
+    mutate(Coef = log(Coef)) %>%
+    spread(Param, Coef) %>% 
+    mutate(Exposed = Exposed - Control) 
+  
+  toPlot %>% 
+    ggplot(aes(Exposed, Control)) + 
+    geom_point(pch = 21, colour = "transparent", alpha = .3, fill = "black") + 
+    facet_wrap(~group)
+    
+}
+
+compRawDraws(df_SI)
+```
+
+
+# Data Processing 
+
+## Key Clinical Outcomes
+
+In the above example, the synthetic data was already in a format that worked for the planned analysis. However, the real data had to be processed prior to being entered into the model. For example, inpatient hospital admissions can involve being transferred from one specialty to another. In these instances, a new row is created to represent this visit though it is still part of one continuous stay. This can cause issues for this type of analysis as the number of "_relevant events_" (in this instance Serious Infections that required hospitalisation) can become inflated. To avoid over-counting, a continuous stay marker can be generated to demonstrate whether a row represents part of a previous visit or a brand new admission.
+
+Using this marker, each stay in hospital can be collapsed into one row with all unique ICD-10 codes appearing on the same row in the data. Additional processing involved removing events that occurred within some time window of a previous event to avoid counting the same event multiple times. In this study, a time window of 28 days was selected. 
+
+## Emergency Health Care 
+
+As above, the Emergency care data could include multiple rows that all refer to a single hospital admission. For this analysis, only the first event within a continuous stay was included in the count. Therefore, only the initial reason for the admission was examined. An admission was counted as being an emergency if the admission type fell into one of several categories: 
+
+<!-- 4:8, 30:36, 38:39 -->
+
+- 4: Deliberate Self Injury or Poisoning*
+- 5: Road Traffic Accident*
+- 6: Home Accident (includes Accidental Poisoning in the home)*
+- 7: Other Injury (includes Accidental Poisoning other than in the home)*
+- 8: Other (excludes Accidental Poisoning)*
+- 30: Emergency Admission - no additional detail
+- 31: Patient Injury - Self Inflicted (Injury or Poisoning)
+- 32: Patient Injury - Road Traffic Accident
+- 33: Patient Injury - Home Incident (incl. assault of accidental poisoning)
+- 34: Patient Injury - Incident at Work (incl. assault of accidental poisoning) 
+- 35: Patient Injury - Other Injury (incl. assaly or accidental poisoning other than in the home or at work) 
+- 36: Patient Non-Injury (e.g. Stroke, MI, ruptured appendix)
+- 38: Other Emergency Admission (including emergency transfers)
+- 39: Emergency Admission - type not known
+
+*NB: Some of the codes included are older codes as the data for this study ranged from 1996 to 2020.
+
+
+# Anything else?
+
+# Session Info 
+
+```{r}
+sessionInfo()
+```
+
+```{js, echo = FALSE}
+title=document.getElementById('header');
+title.innerHTML = '<img src="img/VOICES.jpg">' + title.innerHTML
+```

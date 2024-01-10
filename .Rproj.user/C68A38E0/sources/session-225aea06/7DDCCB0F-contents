@@ -1,6 +1,0 @@
-library(tidyverse)
-library(this.path)
-test <- tibble(letters = letters[1:5])
-
-attr(test, "check") <- c(this.dir())
-print(attributes(test))
