@@ -1,0 +1,6 @@
+"0","df_SI <- df_SI %>% "
+"0","  select(iter, param, Coef) %>% "
+"0","  spread(param, Coef) %>% "
+"0","  select(iter, shape, Intercept, everything())"
+"0",""
+"0","head(df_SI)"

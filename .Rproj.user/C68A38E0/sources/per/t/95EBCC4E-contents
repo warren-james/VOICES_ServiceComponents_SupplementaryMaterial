@@ -68,6 +68,24 @@ theme_update(
 )
 ```
 
+# Load data 
+
+This loads in a dataset for the posterior samples from one of the models fit in the paper "X". This is from the multivariable analysis regarding the rates of Serious Infection. The data is arranged in a long format with the `iter` column linking draws from the posterior across the different parameters. Due to the link functions used in the `brms` package when fitting a negative binomial model, all coefficients for the mu value are on a log scale. For simplicity, coefficients for socio demographic features are not included in this dataset. 
+
+```{r load data, message = F}
+df_SI <- read_csv("data/df_SI.csv")
+
+head(df_SI)
+```
+
+There are a few rows that aren't needed for this demonstration, so the dataset will tidied up to make things easier to generate a synthetic dataset. 
+
+```{r clean up data}
+df_SI %>% 
+  select(iter, param, Coef) %>% 
+  spread(param, Coef)
+```
+
 
 
 
