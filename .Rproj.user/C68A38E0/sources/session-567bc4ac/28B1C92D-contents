@@ -1,0 +1,99 @@
+# make some survival data to look at why a logistic regression doesn't really work 
+# due to censoring caused by loss to follow up... 
+
+#### Library ####
+library(tidyverse)
+library(brms)
+library(tidybayes)
+library(survival)
+
+
+#### Make some data ####
+# keep it simple, only do one group with a difference 
+# and use the weibull with a constant hazard to make it even more simple 
+# so, keep the shape parameter at 1
+x <- seq(0, 23, .2)
+plot(x, dweibull(x, 1, 10))
+
+n_groups <- 2
+n_subj <- 50
+
+a <- 10
+b <- 2
+
+prob_censor <- .5
+
+set.seed(9543)
+df_modelData <- tibble(group = rep(LETTERS[1:n_groups], each = n_subj),
+                       subj = 1:(n_groups * n_subj)) %>% 
+  mutate(scale = a + (group == "B") * b, 
+         time1 = rweibull(n_groups * n_subj, 1, scale), 
+         time2 = rweibull(n_groups * n_subj, 1, scale), 
+         censor = sample(c(0, 1), n(), replace = T, prob = c(1 - prob_censor, prob_censor)),
+         dead = as.integer(censor == 0)) %>% 
+  rowwise() %>% 
+  mutate(obsTime = ifelse(censor, min(time1, time2), max(time1, time2))) %>% 
+  ungroup() 
+
+#### Create some models of these data ####
+# we want to do this two ways, a cox proportional hazards accounting for censoring 
+# and a logistic the way I think they did this... 
+# so, first... I'll set up the data for the logistic model the way I think they've done it... 
+# basically, I think what's happened is they only kept people that had the event (death), or were
+# in the study for at least some time window in order to compare the groups? 
+# the comparison was "did each group experience the event in this 5 year window? 
+# Again, I could also relax the assumption that they didn't inlclude people that weren't in the study 
+# for at least 5 years.... but that doesn't make things much better in all honesty... we'll check both ways 
+df_modelData <- df_modelData %>%
+  mutate(keepForLog = case_when(censor == 0 ~ 1, 
+                                censor == 1 & obsTime > 5 ~ 1, 
+                                TRUE ~ 0))
+
+df_modelData_filtered <- df_modelData[df_modelData$keepForLog == 1,]
+
+# So... let's make the models 
+# bernoulli on filtered data 
+m_logistic_filtered <- brm(dead ~ group, 
+                           family = bernoulli(), 
+                           data = df_modelData_filtered,
+                           chains = 1, 
+                           iter = 2000)
+
+m_logistic_all <- brm(dead ~ group, 
+                      family = bernoulli(), 
+                      data = df_modelData, 
+                      chains = 1, 
+                      iter = 2000)
+
+# fit cox regression with censoring
+m_cox <- brm(obsTime | cens(censor) ~ group, 
+                 family = cox(), 
+                 data = df_modelData, 
+                 chains = 1, 
+                 iter = 2000)
+
+# fit weibull
+m_weibull <- brm(obsTime | cens(censor) ~ group, 
+                 family = weibull(), 
+                 data = df_modelData, 
+                 chains = 1, 
+                 iter = 2000)
+
+
+# now make a plot against a kaplan-meier curve 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

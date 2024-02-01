@@ -1,0 +1,4 @@
+"0","post_nbinom <- m_nbinom %>% "
+"0","  as.matrix() %>% "
+"0","  as_tibble() %>% "
+"0","  select(-c(lp__, lprior)) "

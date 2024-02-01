@@ -1,0 +1,7 @@
+"0","df_modelData <- df_patientData %>% "
+"0","  group_by(subj, Board, timeYears, "
+"0","           AdviceandorLed, CohortedClinic, JointParaClinic, LocalAAVpath, "
+"0","           OwnDayCaseUnit, VascMDT, WaitTimeNewWithinWeek) %>% "
+"0","  summarise(SI_events = sum(posEvent))"
+"0",""
+"0","reactable(df_modelData)"
