@@ -1,9 +1,11 @@
-PAPER TILE
+VOICES
 ================
 
-This is the landing page for the supplementary materials for the paper
-“X”. Processing and Analysis are decribed in separate files found in the
-relevent folders in this repository.
+This page has some information that's useful for supplementing papers from the VOICES project.
+
+
+ICD-10 codes
+===============
 
 Here are all the ICD-10 codes for Serious Infection, Cardiovascular
 Disease, and Cancer that were screened for in the analysis regarding the
