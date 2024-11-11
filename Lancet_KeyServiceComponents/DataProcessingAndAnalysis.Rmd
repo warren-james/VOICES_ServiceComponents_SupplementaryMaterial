@@ -31,6 +31,7 @@ margin: auto;
 text-align: left;
 }
 ```
+
 ```{r setup some ICD codes, include = F, echo = F}
 # This is the same list as the landing page. I've only included it so that they can be used later on when generating the synthetic dataset 
 # this is by no means a clinically valid dataset in terms of what ICD codes appear in the the synthetic records. but I though it was 
@@ -236,7 +237,7 @@ myColour <- "#8a2587"
 
 # Introduction
 
-The supplementary material for the lancet paper looking at how different service components effect key clinical outcomes and health care use. This additional material demonstrates on a set of synthetic data, the data processing and analysis carried out for the paper "X". 
+The supplementary material for the lancet paper looking at how different service components effect key clinical outcomes and health care use. This additional material demonstrates on a set of synthetic data, the data processing and analysis carried out for the paper "__Identifying key health system components associated with improved outcomes to inform the re-configuration of services for adults with rare autoimmune rheumatic diseases: a mixed-methods study__". 
 
 # Library 
 
@@ -272,7 +273,7 @@ theme_update(
 
 # Load data 
 
-This loads in a dataset for the posterior samples from one of the models fit in the paper "X". This is from the multivariable analysis regarding the rates of Serious Infection. The data is arranged in a long format with the `iter` column linking draws from the posterior across the different parameters. Due to the link functions used in the `brms` package when fitting a negative binomial model, all coefficients for the mu value are on a log scale. For simplicity, coefficients for socio demographic features are not included in this dataset. 
+This loads in a dataset for the posterior samples from one of the models fit in this [paper](https://www.thelancet.com/journals/lanrhe/article/PIIS2665-9913(24)00082-1/fulltext). This is from the multivariable analysis regarding the rates of Serious Infection. The data is arranged in a long format with the `iter` column linking draws from the posterior across the different parameters. Due to the link functions used in the `brms` package when fitting a negative binomial model, all coefficients for the mu value are on a log scale. For simplicity, coefficients for socio demographic features are not included in this dataset. 
 
 ```{r load data, message = F}
 df_SI <- read_csv("data/df_SI.csv")
@@ -316,7 +317,7 @@ df_survResps
 
 # Generate Synthetic dataset
 
-Create a dataset with 50 patients per service and add a column with a random iter value ranging from 1 to `r nrow(df_SI)` to retrieve a random draw from the posterior. *There might be a better way to do this, but I think this should reflect the distribution itself?* Then I can combine the posterior draws dataset in order to get a value for the parameters in a negative binomial distribution. From this, I can then generate some synthetic data. 
+Create a dataset with 50 patients per service and add a column with a random iter value ranging from 1 to `r nrow(df_SI)` to retrieve a random draw from the posterior. Then I can combine the posterior draws dataset in order to get a value for the parameters in a negative binomial distribution. From this, I can then generate some synthetic data. 
 
 ```{r Sort out parameter values for various patients, message = F}
 # create some patient data
@@ -329,8 +330,7 @@ df_patientData <- df_survResps %>%
 df_params <- tibble(iter = df_patientData$iter) %>% 
   left_join(df_SI)
 
-# get the parameter values for each patient
-# TODO: Is there a nicer way to do this instead of using a for loop which is really ugly... 
+# get the parameter values for each patient 
 for(i in colnames(df_params)[2:ncol(df_params)]){
   df_patientData[i] <- df_params[i] * df_patientData[i]
 }  
@@ -575,7 +575,9 @@ The model was fit using the `brms` library. All variables regarding the service 
 ```{r run model}
 my_prior <- prior(student_t(3, 0, 1), class = "b")
 
-# Do we really need to run this?
+# A model that only samples the prior 
+# I've commented this out because it doesn't need to be run here 
+# but should you want to check the prior assumptions, this is the code you need
 # m_nbinomn_priorOnly <- brm(
 #   SI_events | rate(timeYears) ~
 #     AdviceandorLed + CohortedClinic + JointParaClinic + 
@@ -620,7 +622,9 @@ post_nbinom <- m_nbinom %>%
   select(-c(lp__, lprior)) 
 ```
 
-### Plotting results {.tabset}
+:::{.panel-tabset}
+
+### Plotting results
 #### Raw coefficients 
 
 This figure shows the raw coefficients on a log scale. With the expection of the Intercept, all values can be compared to the 0 line in order to get a sense for the direction of the effect. 
@@ -698,9 +702,9 @@ toPlot %>%
   
 ```
 
-## test plot 
+::: 
 
-quick test plot to see if this makes sense. This first plot is really hard to read...I'm not sure it's the best we can do here. What I've done here is retrieve the posterior fit for each row and then shown the upper and lower estimate. I'm sure I can make this prettier somehow
+## Expected number of events over time
 
 ```{r, echo = F, include = F}
 df_modelData%>% 
@@ -715,16 +719,7 @@ df_modelData%>%
 ```
 
 
-Try another plot. This one will have each patient on the x axis ordered by their time in the study and then I'll have the predictions for the points.
-
-```{r}
-
-```
-
-
-Make a plot that shows the events over time comparing each service component to the intercept term over time. 
-
-NB: Idea, get the quantiles for each iteration, then get the hdci for the output? Actually... I think it's fine to get the mean hdci for each parameter and then generate the quantiles for the distribution
+This plot shows the total number of expected events over time in the absence of any of the service components (in grey). Each facet shows how this number of events could be expected to change this count compared to having no other service components. The larger shaded region shows where 95% of the data would be expected to lie in a negative binomial distribution using the point estimates from the model outputs. The solid line shows the mean number of events to be expected given the parameter values. The shaded region between the dashed lines shows the 95% credibility interval around the estimate for the mean value. 
 
 ```{r over time plot, echo = T}
 # poorly named function... please don't do this, make useful function names

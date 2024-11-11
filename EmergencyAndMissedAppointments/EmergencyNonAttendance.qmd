@@ -1,0 +1,291 @@
+---
+title: "Emergency admissions and Non-attendance at clinical appointments"
+author: "Warren James"
+format: html
+theme: flatly
+toc: true
+smooth-scroll: true
+lightbox: true
+---
+
+# Introduction
+
+This is the supplementary material for the paper *__X__*. Currently a work in progress so don't judge this too harshly. I'll make it a bit more in depth when the paper's actually being written up
+
+## Library 
+
+```{r library, warning = F, message = F}
+# packages
+library(tidyverse)
+library(tidybayes)
+library(brms)
+library(ggridges)
+library(see)
+library(MASS, exclude = "select")
+library(reactable)
+
+# set theme
+theme_set(theme_minimal())
+```
+
+## Load data 
+
+```{r load in data, message = F}
+df_count <- read_csv("data/modelDraws_CountEvents.csv")
+```
+
+Here's the code to reproduce the figures from the paper. There are a couple of functions to keep things tidy, so I've included those code chunks just now for transparency. 
+
+```{r IR figure functions}
+#| code-fold: true
+getMainEffs <- \(thisData){
+  thisData %>% 
+    select(starts_with("b_")) %>% 
+    # make an iter ID column (will be useful later for different types of plots)
+    rowid_to_column(var = "iter") %>% 
+    gather(2:ncol(.), 
+           key = "toSep", 
+           value = "coef") %>% 
+    # tidy string labels
+    mutate(toSep = str_remove(toSep, "b_")) %>% 
+    # separate the columns to have DV labels
+    separate(toSep, 
+             into = c("DV", "IV"), 
+             sep = "_") %>% 
+    # tidy up the names for any figures
+    mutate(IV = 
+             case_when(
+               grepl("SIMD", IV) ~ str_replace(IV, "Fac", " "), 
+               IV == "SexFac1" ~ "Male", 
+               IV == "ageScaledCentre" ~ "Age (Decades)", 
+               IV == "UrbRurRural" ~ "Rural",
+               TRUE ~ IV
+             ), 
+           DV = 
+             case_when(
+               DV == "totalOutMissed" ~ "Missed Appointments", 
+               TRUE ~ "Emergency Care"
+             )
+    )
+}
+
+# get the random effects structure
+getRandEffs <- \(thisData) {
+  thisData %>% 
+    select(!starts_with("b_")) %>% 
+    # make an iter ID column (will be useful later for different types of plots)
+    rowid_to_column(var = "iter") 
+}
+```
+
+# Figures and Tables
+
+Section has all the figures and tables for the paper.
+
+## Incident Ratio figure
+
+Below is the figure showing the Incident Ratios (IR) alongside the Credibility Intervals (CrI). 
+
+:::{.panel-tabset}
+### Figure
+```{r Make paper figures, message = F}
+#| label: fig-IR
+#| fig-cap: "Figure showing the Incident Ratios and 95% Credibility Intervals for various demographic features within the dataset. The density shows the entire posterior with the points representing the Mean value and lines showing the 50% CrI (thick) and 95% CrI (thin). The vertical line shows the point at which the ratio would show no difference."
+#| code-fold: true
+
+makeIRPlot <- \(thisData, textSize, colours = c("#354B8C", "#F4C900")) {
+  pltData <- getMainEffs(thisData) %>% 
+    mutate(coef = exp(coef)) 
+  
+  # return(pltData %>%
+  #               filter(IV == "Intercept") %>%
+  #               group_by(DV) %>%
+  #               mean_hdci(coef) %>%
+  #               mutate(across(c(coef, .lower, .upper), ~round(.x, digits = 2)))
+  #          )
+  
+  pltData %>%
+    # remove some values we don't care about
+    filter(!IV %in% c("Intercept", "logtimeYears")) %>%  
+    ggplot(aes(coef, IV, fill = DV, colour = DV)) + 
+    geom_vline(xintercept = 1) +
+    geom_density_ridges(alpha = .3, 
+                        colour = "transparent") + 
+    stat_pointinterval(point_interval = "mean_hdci", 
+                       .width = c(.5, .95)) +
+    geom_text(data = pltData %>% 
+                filter(IV == "Intercept") %>% 
+                group_by(DV) %>% 
+                mean_hdci(coef) %>% 
+                mutate(across(c(coef, .lower, .upper), ~round(.x, digits = 2))),  
+              inherit.aes = F, 
+              aes(label = paste0(str_wrap("Average number of events at 1 year:", 15),
+                                 "\n", coef, " [", .lower, " | ", .upper, "]"),
+                  fontface = "bold",
+                  x = 1.4, 
+                  y = 7)) +
+    scale_fill_manual(values = colours) + 
+    scale_colour_manual(values = colours) + 
+    scale_y_discrete("") + 
+    scale_x_continuous("Incident Ratios (95% CrI)") +
+    facet_wrap(~DV) + 
+    theme(legend.position = "bottom")
+}
+
+makeIRPlot(df_count, 12) 
+```
+
+
+```{r save the IR figure, echo = F, message = F, include = F}
+ggsave("figures/IR_figure.png", 
+       height = 1300, 
+       width = 1800, 
+       units = "px")
+```
+
+### Table
+
+```{r IR table, message = F}
+#| code-fold: true
+reactable(
+  makeIRPlot(df_count, 12)[["data"]] %>% 
+    group_by(DV, IV) %>% 
+    mean_hdci(coef) %>% 
+    mutate(across(c(coef, .upper, .lower), ~format(round(.x, 2), nsmall = 2)), 
+           label = paste0(coef, " [", .lower, " | ", .upper, "]")) %>% 
+    select(DV, IV, label) %>% 
+    spread(DV, label)
+)
+```
+
+
+:::
+
+Figure [-@fig-IR] is the base figure for these data. It shows how different demographic features are associated with a reduction (or increase) in the number of events of interest. There are some bits of the story missing here which I will get into later with regards to the modelling of these data. In particular, a bad habit I have noticed with these sorts of analysis, people tend to ignore the "base" number of events. In this case, we are not reporting the base rate (as is standard) due to the coefficient for the effect of observation time not being 1 (on a log scaled). I would always encourage the base rate to be highlighted somewhere in any rate analysis in order to add context to the ratio. It's all well and good being able to say "the rate doubled", but I'd like to know if this means going from 1 in a million to 2 in a million, or 4000 in a million to 8000 in a million. 
+
+## Coefficient for Time
+
+In this particular analysis, we estimated the coefficient for time from the data. I checked this in order to make sure that the assumption that "1" was a good estimate was a good assumption. However, this did not appear to be supported by the data. Below I've created a quick figure to demonstrate what the coefficient was estimated to be from the data. 
+
+```{r coef for time, message = F}
+#| fig-cap: "The coefficient for time when used as an offset term is set to be 1 in the assumption that the rate of events is unchanging over time. This figure shows that, when including time in the list of covariates, the data do not support 1 as the most likely value. Note, this is on a log scale and not a ratio scale like the other figure. Therefore, being below 1 does not equate to a reduction in the rate, it simply shows that the expected number of events does not increase at the same rate as the units of time."
+#| label: fig-time
+#| code-fold: true
+
+timeIRPlot <- \(thisData, colour = c("#354B8C", "#F4C900")){
+  getMainEffs(thisData) %>% 
+    filter(IV == "logtimeYears") %>% 
+    ggplot(aes(coef, DV, fill = DV, colour = DV)) + 
+    geom_vline(xintercept = 1) +
+    geom_density_ridges(colour = "transparent", 
+                        alpha = .3) + 
+    stat_pointinterval(point_interval = "mean_hdci", 
+                       .width = c(.5, .95)) +
+    scale_fill_manual(values = colour) +
+    scale_colour_manual(values = colour) + 
+    scale_x_continuous("Incident Ratio (log scaled)")
+}
+
+timeIRPlot(df_count)
+```
+
+## Correlated Random Intercepts
+
+```{r random intercepts}
+#| fig-cap: "This figure shows simulated random intercept terms using the point estimate for the correlation and standard deviations for the random effects structure."
+#| label: fig-corr
+#| code-fold: true
+
+makeCorrPlot <- \(thisData, N = 1000, textSize = 12, colour = "#00695c", thisSeed = 83164) {
+  # to make things simple I'll only show the average estimates
+  # But also include something to show the distribution for the correlation values 
+  CorrData <- getRandEffs(thisData) %>% 
+    gather(2:ncol(.), 
+           key = "param", 
+           value = "coef") %>% 
+    mutate(param = case_when(grepl("cor_", param) ~ "corr", 
+                             grepl("sd_", param) & grepl("OutMissed", param) ~ "sd_OutMissed", 
+                             TRUE ~ "sd_Emerg")) %>% 
+    group_by(param) %>% 
+    mean_hdci(coef)
+  
+  # get values for covariance matrix
+  thisCorr <- CorrData$coef[CorrData$param == "corr"]
+  sd_Emerg <- CorrData$coef[CorrData$param == "sd_Emerg"]
+  sd_Missd <- CorrData$coef[CorrData$param == "sd_OutMissed"]
+  
+  # make covariance matrix
+  covar <- thisCorr * (sqrt(sd_Missd) * sqrt(sd_Emerg))
+  sigma <- matrix(c(sd_Missd, covar,
+                    covar, sd_Emerg),
+                  2, 2)
+  
+  # set the seed for reproducibility
+  set.seed(thisSeed)
+  
+  # generate some normally distributed correlated values
+  randEffs <- mvrnorm(N, c(0, 0), sigma)
+  randEffs <- tibble(rand_OutMissed = randEffs[,1], 
+                     rand_Emerg     = randEffs[,2])
+  
+  # make the plot 
+  plot <- randEffs %>% 
+    ggplot(aes(rand_OutMissed, rand_Emerg)) + 
+    geom_point(pch = 16, 
+               size = 4, 
+               alpha = .3, 
+               colour = colour) + 
+    scale_x_continuous("Patient level Intercepts for\nNon-attendance at outpatient clinics",
+                       limits = c(min(randEffs), max(randEffs))) + 
+    scale_y_continuous("Patient level Intercepts for Emergency\nCare Episodes",
+                       limits = c(min(randEffs), max(randEffs)))
+  
+  # add in a subplot plot of the correlation
+  subplot <- thisData %>% 
+    select(starts_with("cor_"))
+  colnames(subplot) <- "corr"
+  subplot <- subplot %>% 
+    ggplot(aes(corr)) + 
+    geom_density(alpha = .3, 
+                 fill = colour, 
+                 colour = "transparent") + 
+    stat_pointinterval(point_interval = "mean_hdci", 
+                       .width = c(.5, .95), 
+                       colour = colour) + 
+    scale_y_continuous("") + 
+    scale_x_continuous("Correlation") + 
+    theme(axis.text.y = element_blank(), 
+          axis.line.y.left = element_blank(), 
+          panel.background = element_rect(fill = "white", colour = "white"), 
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank()) + 
+    coord_cartesian(expand = F)
+  
+  subplot <- plot + annotation_custom(ggplotGrob(subplot), 
+                                      xmin = floor(min(randEffs)),
+                                      xmax = -2, 
+                                      ymin = 2,
+                                      ymax = ceiling(max(randEffs)))
+  
+  return(subplot)
+  
+  return(plot)
+}
+
+makeCorrPlot(df_count)
+```
+
+```{r save corr plot, echo = F, include = F}
+ggsave("figures/corr_figure.png", 
+       height = 1300, 
+       width = 1800, 
+       units = "px")
+```
+
+
+Figure [-@fig-corr] shows the random effects structure. As the model allowed these to be correlated within an individual patient, we could examine whether there appeared to be any relationship between the two outcomes in these data after adjusting for relevant sociodemographic variables. In this case; a positive correlation would suggest that people with a higher number of one event would also have a high event of the other, a negative correlation would suggest people with a high number in one have a low number in the other, and a value close to zero would suggest no relationship between the two. 
+
+# Synthetic data 
+
+TODO: 
+Working on creating a synthetic dataset to show the methods we used for these data. Additionally, this will help to explain some of the parts of the analysis people may or may not be overly familiar with. For example, not using "time" as an exposure term in this model, and the idea of correlated intercept terms across outcome measures. 
